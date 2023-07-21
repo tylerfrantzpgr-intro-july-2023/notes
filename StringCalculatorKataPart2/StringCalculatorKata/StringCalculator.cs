@@ -1,40 +1,52 @@
 ﻿
-
 namespace StringCalculatorKata;
 
 public class StringCalculator
 {
-    private readonly Logger _logger;
-    public StringCalculator(Logger logger)
+    private readonly ILogger _logger;
+    private readonly IWebService _webService;
+
+    public StringCalculator(ILogger logger, IWebService webService)
     {
         _logger = logger;
-    }
-    public int Add(string numbers) { 
-
-
-        int result = 0;
-        if (numbers == "")
-        {
-            return 0;
-        }
-
-        _logger.Log(result.ToString());
-
-        return numbers.Split(',') // ["108"]
-                .Select(int.Parse) // [ 108 ]
-                .Sum(); // Sum them up!
+        _webService = webService;
     }
 
-    public class Logger : ILogger
+    public int Add(string numbers)
     {
-
-
-
-        public void Log(string message)
+        int result = 0;
+        if (numbers != "")
         {
-            // Your specific logging thing here
-            Console.WriteLine(message);
+            result = numbers.Split(',')
+                .Select(int.Parse).Sum();
         }
+        try
+        {
+            _logger.Log(result.ToString());
+        }
+        catch (CalculatorLoggerException)
+        {
+
+            _webService.NotifyOfLoggerFailure("Blammo!");
+
+        }
+        return result;
     }
 }
 
+
+public interface IWebService
+{
+    void NotifyOfLoggerFailure(string message);
+
+}
+
+public class Logger : ILogger
+{
+
+    public void Log(string message)
+    {
+        // Your specific logging thing here
+        Console.WriteLine(message);
+    }
+}
